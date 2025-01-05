@@ -1,81 +1,44 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'python:3.9-slim'  // Docker image for Jenkins agent
+            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Mount Docker socket
+        }
+    }
 
     stages {
-        stage('Declarative: Checkout SCM') {
+        stage('Checkout') {
             steps {
-                checkout scm  // Checkout your source code from GitHub
-            }
-        }
-
-        stage('Check Docker Containers') {
-            steps {
-                script {
-                    // Check existing Docker containers
-                    bat 'docker ps -a'
-                }
-            }
-        }
-
-        stage('Clone Repository') {
-            steps {
-                script {
-                    // Clone the repository again if necessary
-                    git branch: 'master', url: 'https://github.com/Ammar69420/python-project.git'
-                }
+                checkout scm  // Checkout the latest code from SCM (Git)
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Build the Docker image using the Dockerfile in the repository
-                    bat 'docker build -t ammarrr03/python-project .'
+                    // Build the Docker image inside the container
+                    sh 'docker build -t ammarrr03/python-project .'
                 }
             }
         }
 
-        stage('Login to Docker Hub') {
+        stage('Push to Docker Hub') {
             steps {
-                script {
-                    // Use Jenkins credentials to securely login to Docker Hub
-                    withCredentials([usernamePassword(credentialsId: '1234', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        // Use Docker login with credentials from Jenkins
-                        bat """
-                        docker login --username %DOCKER_USERNAME% --password %DOCKER_PASSWORD%
-                        """
-                    }
-                }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                script {
-                    // Push the Docker image to Docker Hub
-                    bat 'docker push ammarrr03/python-project'
-                }
-            }
-        }
-
-        stage('Post Actions') {
-            steps {
-                script {
-                    // Clean up unused Docker resources
-                    bat 'docker system prune -f'
+                withCredentials([usernamePassword(credentialsId: '1234', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    // Login and push the Docker image to Docker Hub
+                    sh 'docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD'
+                    sh 'docker push ammarrr03/python-project'
                 }
             }
         }
     }
 
     post {
-        failure {
-            // Handle failure post-build actions
-            echo "The build has failed. Please check the logs for details."
-        }
         success {
-            // Handle success post-build actions
-            echo "The build was successful."
+            echo 'Build and push successful!'
+        }
+        failure {
+            echo 'Build failed. Check logs.'
         }
     }
 }
