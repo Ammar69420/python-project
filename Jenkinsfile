@@ -1,10 +1,6 @@
 pipeline {
     agent any
 
-    environment {
-        DOCKER_HUB_CREDENTIALS = 'docker-hub-creds'  // Jenkins credentials ID for Docker Hub credentials
-    }
-
     stages {
         stage('Declarative: Checkout SCM') {
             steps {
@@ -43,7 +39,8 @@ pipeline {
             steps {
                 script {
                     // Use Jenkins credentials to securely login to Docker Hub
-                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                    withCredentials([usernamePassword(credentialsId: 'docker-hub-creds', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // 'DOCKER_USERNAME' and 'DOCKER_PASSWORD' are automatically set by Jenkins
                         bat 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                     }
                 }
