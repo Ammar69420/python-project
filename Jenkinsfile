@@ -16,7 +16,7 @@ pipeline {
                 }
             }
         }
-        
+
         stage('Clone Repository') {
             steps {
                 git 'https://github.com/Ammar69420/python-project.git'
@@ -26,15 +26,17 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 script {
-                    bat 'docker build -t $DOCKERHUB_USERNAME/$DOCKER_IMAGE .'
+                    // Use % syntax for environment variables in Windows batch
+                    bat "docker build -t %DOCKERHUB_USERNAME%/%DOCKER_IMAGE% ."
                 }
             }
         }
-        
+
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    bat "echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin"
+                    // Log in to Docker Hub
+                    bat "echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USERNAME% --password-stdin"
                 }
             }
         }
@@ -42,7 +44,8 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    bat 'docker push $DOCKERHUB_USERNAME/$DOCKER_IMAGE'
+                    // Push the image to Docker Hub
+                    bat "docker push %DOCKERHUB_USERNAME%/%DOCKER_IMAGE%"
                 }
             }
         }
