@@ -36,20 +36,18 @@ pipeline {
         }
 
         stage('Login to Docker Hub') {
-    steps {
-        script {
-            // Use Jenkins credentials to securely login to Docker Hub
-            withCredentials([usernamePassword(credentialsId: '1234', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                // Use Docker login with credentials from Jenkins
-                bat """
-                docker login --username %DOCKER_USERNAME% --password %DOCKER_PASSWORD%
-                """
+            steps {
+                script {
+                    // Use Jenkins credentials to securely login to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: '1234', passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        // Use Docker login with credentials from Jenkins
+                        bat """
+                        docker login --username %DOCKER_USERNAME% --password %DOCKER_PASSWORD%
+                        """
+                    }
+                }
             }
         }
-    }
-}
-}
-
 
         stage('Push Docker Image') {
             steps {
@@ -80,4 +78,4 @@ pipeline {
             echo "The build was successful."
         }
     }
-
+}
