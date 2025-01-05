@@ -16,7 +16,7 @@ pipeline {
             steps {
                 script {
                     // Check existing Docker containers
-                    sh 'docker ps -a'
+                    bat 'docker ps -a'
                 }
             }
         }
@@ -34,7 +34,7 @@ pipeline {
             steps {
                 script {
                     // Build the Docker image using the Dockerfile in the repository
-                    sh 'docker build -t ammarrr03/python-project .'
+                    bat 'docker build -t ammarrr03/python-project .'
                 }
             }
         }
@@ -44,7 +44,7 @@ pipeline {
                 script {
                     // Use Jenkins credentials to securely login to Docker Hub
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
-                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                        bat 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
                     }
                 }
             }
@@ -54,7 +54,7 @@ pipeline {
             steps {
                 script {
                     // Push the Docker image to Docker Hub
-                    sh 'docker push ammarrr03/python-project'
+                    bat 'docker push ammarrr03/python-project'
                 }
             }
         }
@@ -63,7 +63,7 @@ pipeline {
             steps {
                 script {
                     // Clean up unused Docker resources
-                    sh 'docker system prune -f'
+                    bat 'docker system prune -f'
                 }
             }
         }
