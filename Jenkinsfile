@@ -1,33 +1,40 @@
 pipeline {
-    agent any  // This defines where the pipeline will run (on any available agent)
+    agent any
 
     environment {
-        DOCKER_IMAGE = "python-project"  // Define the Docker image name
-        DOCKERHUB_USERNAME = "ammarrr03" // Your DockerHub username
-        DOCKERHUB_PASSWORD = credentials('1234')  // Jenkins credentials ID for DockerHub password
+        DOCKER_HUB_CREDENTIALS = 'docker-hub-creds'  // Jenkins credentials ID for Docker Hub credentials
     }
 
     stages {
+        stage('Declarative: Checkout SCM') {
+            steps {
+                checkout scm  // Checkout your source code from GitHub
+            }
+        }
+
         stage('Check Docker Containers') {
             steps {
                 script {
-                    // Check Docker containers on the Jenkins agent (Windows version)
-                    bat 'docker ps -a'
+                    // Check existing Docker containers
+                    sh 'docker ps -a'
                 }
             }
         }
 
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/Ammar69420/python-project.git'
+                script {
+                    // Clone the repository again if necessary
+                    git branch: 'master', url: 'https://github.com/Ammar69420/python-project.git'
+                }
             }
         }
 
         stage('Build Docker Image') {
             steps {
                 script {
-                    // Use % syntax for environment variables in Windows batch
-                    bat "docker build -t %DOCKERHUB_USERNAME%/%DOCKER_IMAGE% ."
+                    // Build the Docker image using the Dockerfile in the repository
+                    sh 'docker build -t ammarrr03/python-project .'
                 }
             }
         }
@@ -35,8 +42,10 @@ pipeline {
         stage('Login to Docker Hub') {
             steps {
                 script {
-                    // Log in to Docker Hub
-                    bat "echo %DOCKERHUB_PASSWORD% | docker login -u %DOCKERHUB_USERNAME% --password-stdin"
+                    // Use Jenkins credentials to securely login to Docker Hub
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", passwordVariable: 'DOCKER_PASSWORD', usernameVariable: 'DOCKER_USERNAME')]) {
+                        sh 'echo $DOCKER_PASSWORD | docker login -u $DOCKER_USERNAME --password-stdin'
+                    }
                 }
             }
         }
@@ -44,17 +53,30 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 script {
-                    // Push the image to Docker Hub
-                    bat "docker push %DOCKERHUB_USERNAME%/%DOCKER_IMAGE%"
+                    // Push the Docker image to Docker Hub
+                    sh 'docker push ammarrr03/python-project'
+                }
+            }
+        }
+
+        stage('Post Actions') {
+            steps {
+                script {
+                    // Clean up unused Docker resources
+                    sh 'docker system prune -f'
                 }
             }
         }
     }
 
     post {
-        always {
-            // Clean up (optional)
-            bat 'docker system prune -f'
+        failure {
+            // Handle failure post-build actions
+            echo "The build has failed. Please check the logs for details."
+        }
+        success {
+            // Handle success post-build actions
+            echo "The build was successful."
         }
     }
 }
